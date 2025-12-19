@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Echoes – Space Demo</title>
+<style>
+html, body {
+  margin:0;
+  padding:0;
+  background:black;
+  color:white;
+  font-family:Arial, sans-serif;
+  overflow:hidden;
+}
+canvas { display:block; }
+#ui {
+  position:fixed;
+  bottom:10px;
+  width:100%;
+  display:flex;
+  justify-content:center;
+  gap:12px;
+}
+button {
+  padding:14px 20px;
+  font-size:14px;
+  border-radius:12px;
+  border:1px solid #666;
+  background:#222;
+  color:white;
+}
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="ui">
+  <button onclick="engage()">ENGAGE</button>
+</div>
+
+<script>
+/* CANVAS */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+  ctx.font = "16px Arial";
+}
+resize();
+addEventListener("resize", resize);
+
+/* GAME STATE */
+const player = {
+  hp: 100,
+  dmg: 6,
+  isk: 1000,
+  system: 0
+};
+
+const systems = ["Solara", "Rift", "Korr", "Vega"];
+let enemy = null;
+
+/* STARS */
+const stars=[];
+for(let i=0;i<100;i++){
+  stars.push({
+    x:Math.random()*canvas.width,
+    y:Math.random()*canvas.height,
+    s:Math.random()*1.5+0.5
+  });
+}
+
+/* COMBAT */
+function engage(){
+  enemy = {
+    hp: 40 + player.system*20,
+    dmg: 3 + player.system
+  };
+}
+
+function updateCombat(){
+  if(!enemy) return;
+
+  enemy.hp -= player.dmg * 0.06;
+  player.hp -= enemy.dmg * 0.04;
+
+  if(enemy.hp <= 0){
+    player.isk += 300 + player.system*200;
+    player.system = (player.system + 1) % systems.length;
+    enemy = null;
+    alert("Enemy destroyed! Jumping systems.");
+  }
+
+  if(player.hp <= 0){
+    player.hp = 100;
+    enemy = null;
+    alert("Ship repaired at station.");
+  }
+}
+
+/* LOOP */
+function loop(){
+  ctx.fillStyle="black";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.fillStyle="white";
+  for(const s of stars){
+    s.y+=s.s;
+    if(s.y>canvas.height) s.y=0;
+    ctx.fillRect(s.x,s.y,2,2);
+  }
+
+  updateCombat();
+
+  ctx.fillText("System: " + systems[player.system], 20, 30);
+  ctx.fillText("HP: " + Math.floor(player.hp), 20, 50);
+  ctx.fillText("ISK: " + player.isk, 20, 70);
+
+  if(enemy){
+    ctx.fillText("Enemy HP: " + Math.floor(enemy.hp), 20, 90);
+  } else {
+    ctx.fillText("No hostiles", 20, 90);
+  }
+
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+</body>
+</html>
